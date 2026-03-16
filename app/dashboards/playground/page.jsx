@@ -1,9 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
+const API_KEY_STORAGE = "api_key";
+
 export default function PlaygroundPage() {
+  const router = useRouter();
   const [apiKey, setApiKey] = useState("");
   const [verified, setVerified] = useState(null); // null = not checked, true = exists, false = not found
   const [loading, setLoading] = useState(false);
@@ -24,7 +28,12 @@ export default function PlaygroundPage() {
         .maybeSingle();
 
       if (error) throw error;
-      setVerified(!!data);
+      if (data) {
+        if (typeof window !== "undefined") sessionStorage.setItem(API_KEY_STORAGE, key);
+        router.push("/protected");
+        return;
+      }
+      setVerified(false);
     } catch (err) {
       console.error("Error checking API key:", err);
       setVerified(false);
@@ -33,31 +42,52 @@ export default function PlaygroundPage() {
     }
   };
 
-  const reset = () => {
-    setApiKey("");
-    setVerified(null);
-  };
+  const dismissError = () => setVerified(null);
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">API Playground</h1>
-      <p className="text-sm text-gray-600 mb-8">
-        Enter your API key to access the protected API area.
-      </p>
+    <div className="min-h-[60vh] bg-gray-100/80 flex items-start pt-8">
+      <div className="max-w-xl w-full">
+        <div className="flex items-start justify-between gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">API Playground</h1>
+          {verified === false && (
+            <div className="flex items-center gap-2 rounded bg-red-600 px-4 py-2 text-white font-bold shrink-0">
+              <button
+                type="button"
+                onClick={dismissError}
+                className="p-0.5 rounded hover:bg-red-500 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-2.72 2.72a.75.75 0 101.06 1.06L10 11.06l2.72 2.72a.75.75 0 101.06-1.06L11.06 10l2.72-2.72a.75.75 0 00-1.06-1.06L10 8.94 7.28 6.22z" />
+                </svg>
+              </button>
+              <span>Invalid API Key</span>
+              <button
+                type="button"
+                onClick={dismissError}
+                className="p-0.5 rounded hover:bg-red-500 transition-colors"
+                aria-label="Dismiss"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-2.72 2.72a.75.75 0 101.06 1.06L10 11.06l2.72 2.72a.75.75 0 101.06-1.06L11.06 10l2.72-2.72a.75.75 0 00-1.06-1.06L10 8.94 7.28 6.22z" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
 
-      {verified === null && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="api-key" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="api-key" className="block text-sm font-medium text-gray-900 mb-2">
               API Key
             </label>
             <input
               id="api-key"
-              type="password"
+              type="text"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter your API key"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded border border-blue-500 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
               disabled={loading}
               autoComplete="off"
             />
@@ -65,7 +95,7 @@ export default function PlaygroundPage() {
           <button
             type="submit"
             disabled={loading || !apiKey.trim()}
-            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2.5 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loading ? (
               <>
@@ -73,37 +103,11 @@ export default function PlaygroundPage() {
                 Verifying...
               </>
             ) : (
-              "Verify API Key"
+              "Submit"
             )}
           </button>
         </form>
-      )}
-
-      {verified === true && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
-          <p className="text-lg font-medium text-green-800">This is a protected API area</p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-4 text-sm text-green-700 hover:text-green-900 underline"
-          >
-            Use a different API key
-          </button>
-        </div>
-      )}
-
-      {verified === false && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-lg font-medium text-red-800">API key does not exist</p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-4 text-sm text-red-700 hover:text-red-900 underline"
-          >
-            Try again
-          </button>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
