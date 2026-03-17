@@ -4,7 +4,7 @@ import { useState } from "react";
 import Sidebar from "@/app/components/Sidebar";
 
 export default function DashboardsLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
     <div className="flex min-h-screen h-screen">
@@ -28,9 +28,9 @@ export default function DashboardsLayout({ children }) {
       )}
 
       <main
-        className={`flex-1 min-h-screen overflow-auto bg-white transition-[margin] duration-200 ease-in-out ${
-          sidebarOpen ? "md:ml-64" : ""
-        } pl-14 pt-4 md:pl-16 md:pt-6`}
+        className={`flex-1 min-h-screen overflow-auto bg-gray-50 transition-[margin] duration-200 ease-in-out pt-4 md:pt-6 ${
+          sidebarOpen ? "pl-14 md:ml-64 md:pl-4" : "pl-14 md:pl-16"
+        }`}
       >
         {/* Toggle button - always visible when sidebar is hidden */}
         <button
