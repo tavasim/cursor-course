@@ -233,18 +233,6 @@ export default function DashboardsPage() {
                 </div>
                 <p className="text-xs text-gray-600">0/1,000 Credits</p>
               </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">Pay as you go</span>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
-                  <span className="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1"></span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
