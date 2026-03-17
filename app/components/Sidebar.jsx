@@ -14,7 +14,6 @@ const navItems = [
 
 const externalItems = [
   { href: "https://docs.example.com", label: "Documentation", icon: "document" },
-  { href: "https://mcp.example.com", label: "Tavily MCP", icon: "globe" },
 ];
 
 function Icon({ name, active }) {
@@ -96,20 +95,6 @@ export default function Sidebar({ onClose }) {
             </svg>
           </button>
         )}
-      </div>
-
-      {/* Profile / Workspace selector */}
-      <div className="px-4 pb-4">
-        <button
-          type="button"
-          className="flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-[#E8EDF7] px-3 py-2.5 text-left transition-colors hover:bg-[#DDE4F0]"
-        >
-          <div className="h-8 w-8 shrink-0 rounded-full bg-gray-300" />
-          <span className="flex-1 text-sm font-medium text-gray-900">Personal</span>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4 text-gray-500">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-          </svg>
-        </button>
       </div>
 
       {/* Navigation */}
