@@ -209,7 +209,7 @@ export default function DashboardsPage() {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">CURRENT PLAN</p>
-                <h2 className="text-4xl font-bold text-gray-900 mb-4">Researcher</h2>
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">Dandi API</h2>
               </div>
               <button className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 flex items-center gap-2 text-sm font-medium">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
