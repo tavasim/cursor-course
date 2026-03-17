@@ -307,7 +307,7 @@ export default function DashboardsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{key.usageCount || 0}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                        {showKey[key.id] ? key.key : `moshe-dev-${'*'.repeat(25)}`}
+                        {showKey[key.id] ? key.key : `dandi-dev-${'*'.repeat(25)}`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
