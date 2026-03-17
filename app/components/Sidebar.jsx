@@ -83,14 +83,7 @@ export default function Sidebar({ onClose }) {
     <aside className="flex h-full min-h-0 w-full flex-col rounded-tr-2xl bg-[#F5F5F4] shadow-sm">
       {/* Logo + close button */}
       <div className="flex items-center justify-between gap-2 px-6 pt-8 pb-6">
-        <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gray-900 text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-4 w-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 19.5 15-15m0 0H8.25m11.25 0v11.25" />
-          </svg>
-        </div>
-        <span className="text-lg font-bold tracking-tight text-gray-900">tavily</span>
-        </div>
+        <span className="text-lg font-bold tracking-tight text-gray-900">Dandi</span>
         {onClose && (
           <button
             type="button"
