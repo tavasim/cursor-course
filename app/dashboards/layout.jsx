@@ -29,7 +29,7 @@ export default function DashboardsLayout({ children }) {
 
       <main
         className={`flex-1 min-h-screen overflow-auto bg-gray-50 transition-[margin] duration-200 ease-in-out pt-4 md:pt-6 ${
-          sidebarOpen ? "pl-14 md:ml-64 md:pl-4" : "pl-14 md:pl-16"
+          sidebarOpen ? "pl-14 md:ml-64 md:pl-0" : "pl-14 md:pl-16"
         }`}
       >
         {/* Toggle button - always visible when sidebar is hidden */}
