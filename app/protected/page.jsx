@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { showNotification } from "@/app/components/Notification";
 
 const API_KEY_STORAGE = "api_key";
@@ -25,17 +26,17 @@ export default function ProtectedPage() {
 
     async function validate() {
       try {
-        const res = await fetch("/api/validate-key", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ key }),
-        });
+        const { data, error } = await supabase
+          .from("api_keys")
+          .select("id")
+          .eq("key", key)
+          .maybeSingle();
 
         if (cancelled) return;
 
-        const data = await res.json();
+        if (error) throw error;
 
-        if (data.valid) {
+        if (data) {
           setValid(true);
           setMounted(true);
           showNotification("Valid API key, /protected can be accessed", "success");

@@ -53,7 +53,7 @@ export default function Notification() {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-[100] rounded-lg px-4 py-3 shadow-lg transition-all flex items-center gap-2 ${
+      className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] rounded-lg px-4 py-3 shadow-lg transition-all flex items-center gap-2 ${
         isError ? "bg-red-500 text-white" : "bg-green-500 text-white"
       }`}
     >
