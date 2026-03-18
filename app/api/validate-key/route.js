@@ -56,8 +56,15 @@ export async function POST(request) {
     return NextResponse.json({ valid: false });
   } catch (err) {
     console.error("Validate key error:", err);
+    const message = err?.message ?? "Validation failed";
+    const isNetwork = message.includes("fetch failed") || message.includes("ECONNREFUSED") || message.includes("ETIMEDOUT");
     return NextResponse.json(
-      { valid: false, error: err.message ?? "Validation failed" },
+      {
+        valid: false,
+        error: isNetwork
+          ? "Cannot reach Supabase (network/proxy). Check .env.local and proxy settings."
+          : message,
+      },
       { status: 200 }
     );
   }
