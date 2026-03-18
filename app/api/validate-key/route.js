@@ -3,7 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { valid: false, error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+
     const key = body?.key?.trim();
 
     if (!key) {
@@ -17,9 +26,10 @@ export async function POST(request) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!url || !anonKey) {
+      console.error("Validate key: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local");
       return NextResponse.json(
-        { valid: false, error: "Server configuration error" },
-        { status: 500 }
+        { valid: false, error: "Server configuration error: Supabase env vars not set" },
+        { status: 200 }
       );
     }
 
@@ -32,10 +42,10 @@ export async function POST(request) {
       .maybeSingle();
 
     if (error) {
-      console.error("Validate key error:", error);
+      console.error("Validate key Supabase error:", error);
       return NextResponse.json(
         { valid: false, error: error.message },
-        { status: 500 }
+        { status: 200 }
       );
     }
 
@@ -48,7 +58,7 @@ export async function POST(request) {
     console.error("Validate key error:", err);
     return NextResponse.json(
       { valid: false, error: err.message ?? "Validation failed" },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
