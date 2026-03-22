@@ -72,6 +72,25 @@ async function fetchReadmeExcerpt(owner, repo, token, maxChars = 1200) {
 }
 
 export async function POST(request) {
+  const apiKey = getApiKeyFromRequest(request);
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "x-api-key header is required" },
+      { status: 401 }
+    );
+  }
+
+  const authResult = await validateApiKey(apiKey);
+
+  if (!authResult.valid) {
+    return NextResponse.json(
+      {
+        error: authResult.error ?? "Invalid API key",
+      },
+      { status: 401 }
+    );
+  }
+
   let body;
   try {
     body = await request.json();
@@ -79,18 +98,6 @@ export async function POST(request) {
     return NextResponse.json(
       { error: "Invalid JSON body" },
       { status: 400 }
-    );
-  }
-
-  const apiKey = getApiKeyFromRequest(request, body);
-  const authResult = await validateApiKey(apiKey);
-
-  if (!authResult.valid) {
-    return NextResponse.json(
-      {
-        error: authResult.error ?? "Invalid or missing API key",
-      },
-      { status: 401 }
     );
   }
 

@@ -1,23 +1,16 @@
 import { NextResponse } from "next/server";
-import { validateApiKey } from "@/lib/server/validateApiKey";
+import {
+  validateApiKey,
+  getApiKeyFromRequest,
+} from "@/lib/server/validateApiKey";
 
 export async function POST(request) {
   try {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { valid: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
-    }
-
-    const key = body?.key?.trim();
+    const key = getApiKeyFromRequest(request);
 
     if (!key) {
       return NextResponse.json(
-        { valid: false, error: "API key is required" },
+        { valid: false, error: "x-api-key header is required" },
         { status: 400 }
       );
     }
