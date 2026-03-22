@@ -3,47 +3,10 @@ import {
   validateApiKey,
   getApiKeyFromRequest,
 } from "@/lib/server/validateApiKey";
-
-/**
- * @param {object} body
- * @returns {{ owner: string, repo: string, repositoryUrl: string } | { error: string }}
- */
-function parseRepositoryUrl(body) {
-  const raw = typeof body?.url === "string" ? body.url.trim() : "";
-  if (!raw) {
-    return {
-      error:
-        "url is required: send a JSON body with \"url\" set to the GitHub repository URL (e.g. https://github.com/vercel/next.js)",
-    };
-  }
-
-  try {
-    const u = new URL(raw);
-    const host = u.hostname.toLowerCase();
-    if (host !== "github.com") {
-      return { error: "url must be a github.com repository URL" };
-    }
-
-    const segments = u.pathname
-      .replace(/^\/+|\/+$/g, "")
-      .split("/")
-      .filter(Boolean);
-    if (segments.length < 2) {
-      return {
-        error:
-          "url must include the repository path: https://github.com/<owner>/<repository>",
-      };
-    }
-
-    const owner = segments[0];
-    const repo = segments[1].replace(/\.git$/, "");
-    const repositoryUrl = `https://github.com/${owner}/${repo}`;
-
-    return { owner, repo, repositoryUrl };
-  } catch {
-    return { error: "Invalid url" };
-  }
-}
+import {
+  parseGithubRepositoryUrl,
+  getReadmeMarkdownFromGithubUrl,
+} from "@/lib/server/githubReadme";
 
 async function fetchRepoMeta(owner, repo, token) {
   const headers = {
@@ -67,23 +30,12 @@ async function fetchRepoMeta(owner, repo, token) {
   return { data };
 }
 
-async function fetchReadmeExcerpt(owner, repo, token, maxChars = 1200) {
-  const headers = {
-    Accept: "application/vnd.github.raw",
-    "User-Agent": "cursor-course-github-summarizer",
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const res = await fetch(
-    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/readme`,
-    { headers, next: { revalidate: 0 } }
-  );
-  if (!res.ok) {
+async function fetchReadmeExcerpt(repositoryUrl, token, maxChars = 1200) {
+  const readme = await getReadmeMarkdownFromGithubUrl(repositoryUrl, { token });
+  if (readme.error || !readme.content) {
     return "";
   }
-  const text = await res.text();
-  const cleaned = text.replace(/\s+/g, " ").trim();
+  const cleaned = readme.content.replace(/\s+/g, " ").trim();
   return cleaned.length > maxChars ? `${cleaned.slice(0, maxChars)}…` : cleaned;
 }
 
@@ -112,7 +64,7 @@ export async function POST(request) {
     );
   }
 
-  const parsed = parseRepositoryUrl(body);
+  const parsed = parseGithubRepositoryUrl(body?.url);
   if (parsed.error) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
@@ -131,7 +83,7 @@ export async function POST(request) {
 
     const { description, html_url, default_branch, stargazers_count, language } =
       meta.data;
-    const readmeExcerpt = await fetchReadmeExcerpt(owner, repo, token);
+    const readmeExcerpt = await fetchReadmeExcerpt(repositoryUrl, token);
 
     const parts = [];
     if (description) {
