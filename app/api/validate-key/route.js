@@ -1,71 +1,33 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  validateApiKey,
+  getApiKeyFromRequest,
+} from "@/lib/server/validateApiKey";
 
 export async function POST(request) {
   try {
-    let body;
-    try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json(
-        { valid: false, error: "Invalid JSON body" },
-        { status: 400 }
-      );
-    }
-
-    const key = body?.key?.trim();
+    const key = getApiKeyFromRequest(request);
 
     if (!key) {
       return NextResponse.json(
-        { valid: false, error: "API key is required" },
+        { valid: false, error: "x-api-key header is required" },
         { status: 400 }
       );
     }
 
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const result = await validateApiKey(key);
 
-    if (!url || !anonKey) {
-      console.error("Validate key: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local");
-      return NextResponse.json(
-        { valid: false, error: "Server configuration error: Supabase env vars not set" },
-        { status: 200 }
-      );
-    }
-
-    const supabase = createClient(url, anonKey);
-
-    const { data, error } = await supabase
-      .from("api_keys")
-      .select("id")
-      .eq("key", key)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Validate key Supabase error:", error);
-      return NextResponse.json(
-        { valid: false, error: error.message },
-        { status: 200 }
-      );
-    }
-
-    if (data) {
+    if (result.valid) {
       return NextResponse.json({ valid: true });
     }
 
-    return NextResponse.json({ valid: false });
+    return NextResponse.json({
+      valid: false,
+      ...(result.error ? { error: result.error } : {}),
+    });
   } catch (err) {
     console.error("Validate key error:", err);
     const message = err?.message ?? "Validation failed";
-    const isNetwork = message.includes("fetch failed") || message.includes("ECONNREFUSED") || message.includes("ETIMEDOUT");
-    return NextResponse.json(
-      {
-        valid: false,
-        error: isNetwork
-          ? "Cannot reach Supabase (network/proxy). Check .env.local and proxy settings."
-          : message,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ valid: false, error: message }, { status: 200 });
   }
 }
