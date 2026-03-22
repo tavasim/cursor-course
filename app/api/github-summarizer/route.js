@@ -76,14 +76,14 @@ export async function POST(request) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "x-api-key header is required" },
-      { status: 401 }
+      { status: 200 }
     );
   }
 
   const authResult = await validateApiKey(apiKey);
 
   if (!authResult.valid) {
-    return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
+    return NextResponse.json({ error: "Invalid API key" }, { status: 200 });
   }
 
   let body;
