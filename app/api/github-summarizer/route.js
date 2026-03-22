@@ -4,29 +4,45 @@ import {
   getApiKeyFromRequest,
 } from "@/lib/server/validateApiKey";
 
-function parseGithubInput(body) {
-  const owner = body?.owner?.trim();
-  const repo = body?.repo?.trim();
-  if (owner && repo) {
-    return { owner, repo };
+/**
+ * @param {object} body
+ * @returns {{ owner: string, repo: string, repositoryUrl: string } | { error: string }}
+ */
+function parseRepositoryUrl(body) {
+  const raw = typeof body?.url === "string" ? body.url.trim() : "";
+  if (!raw) {
+    return {
+      error:
+        "url is required: send a JSON body with \"url\" set to the GitHub repository URL (e.g. https://github.com/vercel/next.js)",
+    };
   }
-  const url = body?.url?.trim();
-  if (url) {
-    try {
-      const u = new URL(url);
-      if (!u.hostname.includes("github.com")) {
-        return { error: "url must be a github.com repository URL" };
-      }
-      const parts = u.pathname.replace(/^\/+|\/+$/g, "").split("/");
-      if (parts.length >= 2) {
-        return { owner: parts[0], repo: parts[1].replace(/\.git$/, "") };
-      }
-    } catch {
-      return { error: "Invalid url" };
+
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.toLowerCase();
+    if (host !== "github.com") {
+      return { error: "url must be a github.com repository URL" };
     }
-    return { error: "Could not parse owner/repo from url" };
+
+    const segments = u.pathname
+      .replace(/^\/+|\/+$/g, "")
+      .split("/")
+      .filter(Boolean);
+    if (segments.length < 2) {
+      return {
+        error:
+          "url must include the repository path: https://github.com/<owner>/<repository>",
+      };
+    }
+
+    const owner = segments[0];
+    const repo = segments[1].replace(/\.git$/, "");
+    const repositoryUrl = `https://github.com/${owner}/${repo}`;
+
+    return { owner, repo, repositoryUrl };
+  } catch {
+    return { error: "Invalid url" };
   }
-  return { error: "Provide owner and repo, or a github.com url" };
 }
 
 async function fetchRepoMeta(owner, repo, token) {
@@ -96,12 +112,12 @@ export async function POST(request) {
     );
   }
 
-  const parsed = parseGithubInput(body);
+  const parsed = parseRepositoryUrl(body);
   if (parsed.error) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const { owner, repo } = parsed;
+  const { owner, repo, repositoryUrl } = parsed;
   const token = process.env.GITHUB_TOKEN?.trim() || "";
 
   try {
@@ -136,9 +152,9 @@ export async function POST(request) {
       `Public repository ${owner}/${repo} (no description or README text returned).`;
 
     return NextResponse.json({
+      url: html_url ?? repositoryUrl,
       owner,
       repo,
-      url: html_url ?? `https://github.com/${owner}/${repo}`,
       defaultBranch: default_branch ?? null,
       summary,
     });
