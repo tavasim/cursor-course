@@ -83,12 +83,7 @@ export async function POST(request) {
   const authResult = await validateApiKey(apiKey);
 
   if (!authResult.valid) {
-    return NextResponse.json(
-      {
-        error: authResult.error ?? "Invalid API key",
-      },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid API key" }, { status: 401 });
   }
 
   let body;
