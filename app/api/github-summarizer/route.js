@@ -110,8 +110,13 @@ export async function POST(request) {
     let summary = fallbackSummary;
     let cool_facts = [];
     let summarySource = "metadata";
+    let llm_status = "skipped_no_readme";
 
-    if (readmeContent && process.env.OPENAI_API_KEY?.trim()) {
+    if (!readmeContent) {
+      llm_status = "skipped_no_readme";
+    } else if (!process.env.OPENAI_API_KEY?.trim()) {
+      llm_status = "skipped_no_openai_key";
+    } else {
       try {
         const llmResult = await summarizeReadmeFromMarkdown(readmeContent);
         cool_facts = llmResult.cool_facts ?? [];
@@ -119,8 +124,10 @@ export async function POST(request) {
           summary = llmResult.Summary.trim();
           summarySource = "llm";
         }
+        llm_status = "ok";
       } catch (llmErr) {
         console.error("github-summarizer LLM:", llmErr);
+        llm_status = "error";
       }
     }
 
@@ -132,6 +139,7 @@ export async function POST(request) {
       summary,
       cool_facts,
       summarySource,
+      llm_status,
     });
   } catch (err) {
     console.error("github-summarizer:", err);
