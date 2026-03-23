@@ -109,14 +109,16 @@ export async function POST(request) {
 
     let summary = fallbackSummary;
     let coolFacts = [];
+    let summarySource = "metadata";
 
     if (readmeContent && process.env.OPENAI_API_KEY?.trim()) {
       try {
         const llmResult = await summarizeReadmeFromMarkdown(readmeContent);
+        coolFacts = llmResult.cool_facts ?? [];
         if (llmResult.Summary?.trim()) {
           summary = llmResult.Summary.trim();
+          summarySource = "llm";
         }
-        coolFacts = llmResult.cool_facts ?? [];
       } catch (llmErr) {
         console.error("github-summarizer LLM:", llmErr);
       }
@@ -128,7 +130,8 @@ export async function POST(request) {
       repo,
       defaultBranch: default_branch ?? null,
       summary,
-      ...(coolFacts.length > 0 ? { coolFacts } : {}),
+      coolFacts,
+      summarySource,
     });
   } catch (err) {
     console.error("github-summarizer:", err);
