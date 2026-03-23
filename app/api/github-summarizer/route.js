@@ -108,13 +108,13 @@ export async function POST(request) {
       `Public repository ${owner}/${repo} (no description or README text returned).`;
 
     let summary = fallbackSummary;
-    let coolFacts = [];
+    let cool_facts = [];
     let summarySource = "metadata";
 
     if (readmeContent && process.env.OPENAI_API_KEY?.trim()) {
       try {
         const llmResult = await summarizeReadmeFromMarkdown(readmeContent);
-        coolFacts = llmResult.cool_facts ?? [];
+        cool_facts = llmResult.cool_facts ?? [];
         if (llmResult.Summary?.trim()) {
           summary = llmResult.Summary.trim();
           summarySource = "llm";
@@ -130,7 +130,7 @@ export async function POST(request) {
       repo,
       defaultBranch: default_branch ?? null,
       summary,
-      coolFacts,
+      cool_facts,
       summarySource,
     });
   } catch (err) {
