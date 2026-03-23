@@ -8,6 +8,7 @@ import {
   getReadmeMarkdownFromGithubUrl,
 } from "@/lib/server/githubReadme";
 import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
+import { getOpenAiApiKey } from "@/lib/server/openaiEnv";
 
 async function fetchRepoMeta(owner, repo, token) {
   const headers = {
@@ -111,14 +112,17 @@ export async function POST(request) {
     let cool_facts = [];
     let summarySource = "metadata";
     let llm_status = "skipped_no_readme";
+    const openAiKey = getOpenAiApiKey();
 
     if (!readmeContent) {
       llm_status = "skipped_no_readme";
-    } else if (!process.env.OPENAI_API_KEY?.trim()) {
+    } else if (!openAiKey) {
       llm_status = "skipped_no_openai_key";
     } else {
       try {
-        const llmResult = await summarizeReadmeFromMarkdown(readmeContent);
+        const llmResult = await summarizeReadmeFromMarkdown(readmeContent, {
+          apiKey: openAiKey,
+        });
         cool_facts = llmResult.cool_facts ?? [];
         if (llmResult.Summary?.trim()) {
           summary = llmResult.Summary.trim();
