@@ -7,6 +7,7 @@ import {
   parseGithubRepositoryUrl,
   getReadmeMarkdownFromGithubUrl,
 } from "@/lib/server/githubReadme";
+import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
 
 async function fetchRepoMeta(owner, repo, token) {
   const headers = {
@@ -30,12 +31,9 @@ async function fetchRepoMeta(owner, repo, token) {
   return { data };
 }
 
-async function fetchReadmeExcerpt(repositoryUrl, token, maxChars = 1200) {
-  const readme = await getReadmeMarkdownFromGithubUrl(repositoryUrl, { token });
-  if (readme.error || !readme.content) {
-    return "";
-  }
-  const cleaned = readme.content.replace(/\s+/g, " ").trim();
+function readmeToExcerpt(content, maxChars = 1200) {
+  if (!content) return "";
+  const cleaned = content.replace(/\s+/g, " ").trim();
   return cleaned.length > maxChars ? `${cleaned.slice(0, maxChars)}…` : cleaned;
 }
 
@@ -83,7 +81,13 @@ export async function POST(request) {
 
     const { description, html_url, default_branch, stargazers_count, language } =
       meta.data;
-    const readmeExcerpt = await fetchReadmeExcerpt(repositoryUrl, token);
+
+    const readmeResult = await getReadmeMarkdownFromGithubUrl(repositoryUrl, {
+      token,
+    });
+    const readmeContent =
+      !readmeResult.error && readmeResult.content ? readmeResult.content : "";
+    const readmeExcerpt = readmeToExcerpt(readmeContent);
 
     const parts = [];
     if (description) {
@@ -99,9 +103,24 @@ export async function POST(request) {
       parts.push(`README excerpt: ${readmeExcerpt}`);
     }
 
-    const summary =
+    const fallbackSummary =
       parts.join(" ") ||
       `Public repository ${owner}/${repo} (no description or README text returned).`;
+
+    let summary = fallbackSummary;
+    let coolFacts = [];
+
+    if (readmeContent && process.env.OPENAI_API_KEY?.trim()) {
+      try {
+        const llmResult = await summarizeReadmeFromMarkdown(readmeContent);
+        if (llmResult.Summary?.trim()) {
+          summary = llmResult.Summary.trim();
+        }
+        coolFacts = llmResult.cool_facts ?? [];
+      } catch (llmErr) {
+        console.error("github-summarizer LLM:", llmErr);
+      }
+    }
 
     return NextResponse.json({
       url: html_url ?? repositoryUrl,
@@ -109,6 +128,7 @@ export async function POST(request) {
       repo,
       defaultBranch: default_branch ?? null,
       summary,
+      ...(coolFacts.length > 0 ? { coolFacts } : {}),
     });
   } catch (err) {
     console.error("github-summarizer:", err);
