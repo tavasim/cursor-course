@@ -9,6 +9,10 @@ import {
 } from "@/lib/server/githubReadme";
 import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
 import { getOpenAiApiKey } from "@/lib/server/openaiEnv";
+import { getLlmErrorMessageForClient } from "@/lib/server/llmError";
+
+/** Allow time for GitHub + OpenAI on Vercel (plan may still cap lower on Hobby). */
+export const maxDuration = 60;
 
 async function fetchRepoMeta(owner, repo, token) {
   const headers = {
@@ -112,6 +116,7 @@ export async function POST(request) {
     let cool_facts = [];
     let summarySource = "metadata";
     let llm_status = "skipped_no_readme";
+    let llm_error = null;
     const openAiKey = getOpenAiApiKey();
 
     if (!readmeContent) {
@@ -132,6 +137,7 @@ export async function POST(request) {
       } catch (llmErr) {
         console.error("github-summarizer LLM:", llmErr);
         llm_status = "error";
+        llm_error = getLlmErrorMessageForClient(llmErr);
       }
     }
 
@@ -144,6 +150,7 @@ export async function POST(request) {
       cool_facts,
       summarySource,
       llm_status,
+      ...(llm_error ? { llm_error } : {}),
     });
   } catch (err) {
     console.error("github-summarizer:", err);
