@@ -1,123 +1,82 @@
 # Supabase Setup Guide
 
-This guide will help you connect your API Keys CRUD application to Supabase.
+This guide will help you connect your app to Supabase.
 
 ## Step 1: Create a Supabase Project
 
 1. Go to [https://app.supabase.com](https://app.supabase.com)
-2. Sign up or log in to your account
+2. Sign up or log in
 3. Click "New Project"
-4. Fill in your project details:
-   - **Name**: Your project name
-   - **Database Password**: Choose a strong password (save this!)
-   - **Region**: Choose the closest region to your users
-5. Click "Create new project" and wait for it to be set up (takes ~2 minutes)
+4. Fill project details and create
 
-## Step 2: Get Your Supabase Credentials
+## Step 2: Get Supabase Credentials
 
-1. In your Supabase project dashboard, go to **Settings** → **API**
-2. You'll find:
-   - **Project URL**: Copy this value
-   - **anon/public key**: Copy this value
+In **Settings ? API** copy:
+
+- Project URL
+- anon/public key
+- service_role key (server-only; never expose in browser)
 
 ## Step 3: Set Up Environment Variables
 
-1. Create a `.env.local` file in the root of your project (if it doesn't exist)
-2. Add the following variables:
+Create `.env.local` and set:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
 
-Replace `your_project_url_here` and `your_anon_key_here` with the values from Step 2.
+If you use Google SSO with NextAuth also set:
 
-**Important**: Never commit `.env.local` to version control. It's already in `.gitignore`.
+```env
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+NEXTAUTH_SECRET=...
+NEXTAUTH_URL=http://127.0.0.1:8080
+```
 
-## Step 4: Create the Database Table
+## Step 4: Create Database Tables
 
-1. In your Supabase project dashboard, go to **SQL Editor**
-2. Click "New query"
-3. Copy and paste the contents of `supabase/schema.sql`
-4. Click "Run" to execute the SQL
-5. You should see a success message
+1. Open **SQL Editor**
+2. Run `supabase/schema.sql`
 
-The SQL script will:
-- Create the `api_keys` table with all necessary columns
-- Set up indexes for better performance
-- Enable Row Level Security (RLS)
-- Create a policy that allows all operations (you can customize this later)
-- Set up automatic timestamp updates
+This creates:
 
-## Step 5: Verify the Setup
+- `api_keys` table
+- `users` table (for first-login provisioning)
 
-1. Restart your Next.js development server:
-   ```bash
-   npm run dev
-   ```
+## Step 5: First-login User Provisioning
 
-2. Navigate to your API Keys dashboard
-3. Try creating a new API key
-4. Check your Supabase dashboard → **Table Editor** → `api_keys` to see your data
+On successful Google sign-in, the app runs a server-side provision step:
 
-## Database Schema
+- If user email does not exist in `users`, insert a new row with profile fields.
+- If exists, update `last_login_at` and profile fields.
 
-The `api_keys` table has the following structure:
+Fields used in `users`:
 
-- `id` (UUID): Primary key, auto-generated
-- `name` (TEXT): Name of the API key
-- `key` (TEXT): The actual API key value (unique)
-- `description` (TEXT): Optional description
-- `type` (TEXT): Either 'development' or 'production'
-- `limit_monthly_usage` (BOOLEAN): Whether monthly usage is limited
-- `monthly_usage_limit` (INTEGER): Monthly usage limit if enabled
-- `usage_count` (INTEGER): Current usage count
-- `last_used` (TIMESTAMP): Last time the key was used
-- `created_at` (TIMESTAMP): When the key was created
-- `updated_at` (TIMESTAMP): When the key was last updated (auto-updated)
+- `email` (unique)
+- `full_name`
+- `avatar_url`
+- `auth_provider`
+- `auth_provider_user_id`
+- `first_login_at`
+- `last_login_at`
 
 ## Security Notes
 
-The current setup uses a policy that allows all operations. For production:
-
-1. **Add Authentication**: Implement user authentication (Supabase Auth)
-2. **Update RLS Policies**: Create policies that restrict access based on user ID
-3. **Use Service Role Key**: For server-side operations, use the service role key (never expose this in client-side code)
-
-Example RLS policy for authenticated users:
-```sql
--- Drop the existing policy
-DROP POLICY IF EXISTS "Allow all operations for api_keys" ON api_keys;
-
--- Create user-specific policy
-CREATE POLICY "Users can manage their own api_keys" ON api_keys
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
-```
+- Keep `SUPABASE_SERVICE_ROLE_KEY` server-only.
+- Do not expose service role in client code.
+- `.env.local` should stay ignored in git.
 
 ## Troubleshooting
 
-### Error: "Missing Supabase environment variables"
-- Make sure `.env.local` exists and contains both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- Restart your development server after adding environment variables
+### `NextAuth user provisioning failed`
 
-### Error: "relation 'api_keys' does not exist"
-- Make sure you've run the SQL schema from `supabase/schema.sql` in the Supabase SQL Editor
+- Check `SUPABASE_SERVICE_ROLE_KEY` is set and valid.
+- Check `users` table exists.
+- Check SQL policies and RLS configuration.
 
-### Error: "new row violates row-level security policy"
-- Check your RLS policies in Supabase → Authentication → Policies
-- Make sure the policy allows the operation you're trying to perform
+### `relation "users" does not exist`
 
-### Data not appearing
-- Check the browser console for errors
-- Verify your Supabase credentials are correct
-- Check the Supabase dashboard → Table Editor to see if data was inserted
-
-## Next Steps
-
-- Add user authentication
-- Implement usage tracking
-- Add API key validation
-- Set up rate limiting based on key type
-- Add analytics and reporting
+- Run `supabase/schema.sql` again.
