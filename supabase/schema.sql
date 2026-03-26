@@ -50,10 +50,27 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow server-managed operations for users" ON users
-  FOR ALL
+-- Keep users policies explicit and minimal for anon-key provisioning flow.
+DROP POLICY IF EXISTS "Allow server-managed operations for users" ON users;
+DROP POLICY IF EXISTS "users_select_policy" ON users;
+DROP POLICY IF EXISTS "users_insert_policy" ON users;
+DROP POLICY IF EXISTS "users_update_policy" ON users;
+
+CREATE POLICY "users_select_policy" ON users
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "users_insert_policy" ON users
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (email IS NOT NULL);
+
+CREATE POLICY "users_update_policy" ON users
+  FOR UPDATE
+  TO anon, authenticated
   USING (true)
-  WITH CHECK (true);
+  WITH CHECK (email IS NOT NULL);
 
 -- Create a function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
