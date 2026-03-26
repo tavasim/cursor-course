@@ -11,11 +11,10 @@ This guide will help you connect your app to Supabase.
 
 ## Step 2: Get Supabase Credentials
 
-In **Settings ? API** copy:
+In **Settings -> API** copy:
 
 - Project URL
-- anon/public key
-- service_role key (server-only; never expose in browser)
+- anon/public key (used by this app for both client calls and sign-in provisioning)
 
 ## Step 3: Set Up Environment Variables
 
@@ -24,7 +23,6 @@ Create `.env.local` and set:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_project_url_here
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 ```
 
 If you use Google SSO with NextAuth also set:
@@ -65,15 +63,15 @@ Fields used in `users`:
 
 ## Security Notes
 
-- Keep `SUPABASE_SERVICE_ROLE_KEY` server-only.
-- Do not expose service role in client code.
+- This project uses the anon key for provisioning, so ensure your `users` table policy allows inserts/updates for this flow.
+- Keep sensitive keys out of git.
 - `.env.local` should stay ignored in git.
 
 ## Troubleshooting
 
 ### `NextAuth user provisioning failed`
 
-- Check `SUPABASE_SERVICE_ROLE_KEY` is set and valid.
+- Check `NEXT_PUBLIC_SUPABASE_ANON_KEY` is set and valid.
 - Check `users` table exists.
 - Check SQL policies and RLS configuration.
 
