@@ -2,7 +2,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check } from "lucide-react"
 
-const plans = [
+const plans: {
+  name: string
+  price: string
+  period?: string
+  description: string
+  features: string[]
+  cta: string
+  popular: boolean
+  comingSoon?: boolean
+}[] = [
   {
     name: "Free",
     price: "$0",
@@ -31,11 +40,12 @@ const plans = [
       "Export reports as PDF",
       "Priority support"
     ],
-    cta: "Start Free Trial",
-    popular: true
+    cta: "Coming Soon",
+    popular: true,
+    comingSoon: true
   },
   {
-    name: "Team",
+    name: "Enterprise",
     price: "$39",
     period: "/month",
     description: "For teams monitoring multiple repos",
@@ -48,8 +58,9 @@ const plans = [
       "Custom alerts",
       "Dedicated support"
     ],
-    cta: "Contact Sales",
-    popular: false
+    cta: "Coming Soon",
+    popular: false,
+    comingSoon: true
   }
 ]
 
@@ -70,13 +81,9 @@ export function Pricing() {
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative bg-card ${plan.popular ? "border-accent shadow-lg shadow-accent/10" : "border-border"}`}
+              className="relative bg-card border-border"
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent px-4 py-1 text-sm font-medium text-accent-foreground">
-                  Most Popular
-                </div>
-              )}
+              
               <CardHeader className="pt-8">
                 <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
                 <CardDescription className="text-muted-foreground">{plan.description}</CardDescription>
@@ -97,6 +104,7 @@ export function Pricing() {
                 <Button
                   className={`mt-8 w-full ${plan.popular ? "" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
                   variant={plan.popular ? "default" : "secondary"}
+                  disabled={plan.comingSoon}
                 >
                   {plan.cta}
                 </Button>
