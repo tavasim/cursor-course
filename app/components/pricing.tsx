@@ -24,7 +24,7 @@ const plans: {
       "Community support"
     ],
     cta: "Get Started",
-    popular: false
+    popular: true
   },
   {
     name: "Pro",
@@ -41,7 +41,7 @@ const plans: {
       "Priority support"
     ],
     cta: "Coming Soon",
-    popular: true,
+    popular: false,
     comingSoon: true
   },
   {
