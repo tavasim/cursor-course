@@ -2,7 +2,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Check } from "lucide-react"
 
-const plans = [
+const plans: {
+  name: string
+  price: string
+  period?: string
+  description: string
+  features: string[]
+  cta: string
+  popular: boolean
+  comingSoon?: boolean
+}[] = [
   {
     name: "Free",
     price: "$0",
@@ -15,7 +24,7 @@ const plans = [
       "Community support"
     ],
     cta: "Get Started",
-    popular: false
+    popular: true
   },
   {
     name: "Pro",
@@ -31,11 +40,12 @@ const plans = [
       "Export reports as PDF",
       "Priority support"
     ],
-    cta: "Start Free Trial",
-    popular: true
+    cta: "Subscribe",
+    popular: false,
+    comingSoon: true
   },
   {
-    name: "Team",
+    name: "Enterprise",
     price: "$39",
     period: "/month",
     description: "For teams monitoring multiple repos",
@@ -49,7 +59,8 @@ const plans = [
       "Dedicated support"
     ],
     cta: "Contact Sales",
-    popular: false
+    popular: false,
+    comingSoon: true
   }
 ]
 
@@ -70,11 +81,11 @@ export function Pricing() {
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative bg-card ${plan.popular ? "border-accent shadow-lg shadow-accent/10" : "border-border"}`}
+              className="relative bg-card border-border"
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-accent px-4 py-1 text-sm font-medium text-accent-foreground">
-                  Most Popular
+              {plan.comingSoon && (
+                <div className="absolute top-4 right-4 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  Coming Soon
                 </div>
               )}
               <CardHeader className="pt-8">
@@ -97,6 +108,7 @@ export function Pricing() {
                 <Button
                   className={`mt-8 w-full ${plan.popular ? "" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}
                   variant={plan.popular ? "default" : "secondary"}
+                  disabled={plan.comingSoon}
                 >
                   {plan.cta}
                 </Button>
