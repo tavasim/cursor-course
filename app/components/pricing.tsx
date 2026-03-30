@@ -40,7 +40,7 @@ const plans: {
       "Export reports as PDF",
       "Priority support"
     ],
-    cta: "Subscribe",
+    cta: "Coming Soon",
     popular: false,
     comingSoon: true
   },
@@ -58,7 +58,7 @@ const plans: {
       "Custom alerts",
       "Dedicated support"
     ],
-    cta: "Contact Sales",
+    cta: "Coming Soon",
     popular: false,
     comingSoon: true
   }
