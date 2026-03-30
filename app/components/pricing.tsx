@@ -40,7 +40,7 @@ const plans: {
       "Export reports as PDF",
       "Priority support"
     ],
-    cta: "Coming Soon",
+    cta: "Subscribe",
     popular: false,
     comingSoon: true
   },
@@ -58,7 +58,7 @@ const plans: {
       "Custom alerts",
       "Dedicated support"
     ],
-    cta: "Coming Soon",
+    cta: "Contact Sales",
     popular: false,
     comingSoon: true
   }
@@ -83,7 +83,11 @@ export function Pricing() {
               key={plan.name}
               className="relative bg-card border-border"
             >
-              
+              {plan.comingSoon && (
+                <div className="absolute top-4 right-4 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
+                  Coming Soon
+                </div>
+              )}
               <CardHeader className="pt-8">
                 <CardTitle className="text-xl text-foreground">{plan.name}</CardTitle>
                 <CardDescription className="text-muted-foreground">{plan.description}</CardDescription>
