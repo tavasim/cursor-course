@@ -3,6 +3,7 @@ import {
   validateApiKey,
   getApiKeyFromRequest,
   incrementApiKeyUsage,
+  checkApiKeyRateLimit,
 } from "@/lib/server/validateApiKey";
 import {
   parseGithubRepositoryUrl,
@@ -56,6 +57,16 @@ export async function POST(request) {
 
   if (!authResult.valid) {
     return NextResponse.json({ error: "Invalid API key" }, { status: 200 });
+  }
+  const rateLimit = await checkApiKeyRateLimit(apiKey);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      {
+        error: rateLimit.error,
+        remaining: rateLimit.remaining,
+      },
+      { status: 429 }
+    );
   }
   await incrementApiKeyUsage(apiKey);
 
@@ -152,6 +163,9 @@ export async function POST(request) {
       cool_facts,
       summarySource,
       llm_status,
+      ...(rateLimit.remaining !== null
+        ? { remaining: Math.max(rateLimit.remaining - 1, 0) }
+        : {}),
       ...(llm_error ? { llm_error } : {}),
     });
   } catch (err) {
