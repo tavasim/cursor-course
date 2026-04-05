@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   validateApiKey,
   getApiKeyFromRequest,
+  incrementApiKeyUsage,
 } from "@/lib/server/validateApiKey";
 import {
   parseGithubRepositoryUrl,
@@ -56,6 +57,7 @@ export async function POST(request) {
   if (!authResult.valid) {
     return NextResponse.json({ error: "Invalid API key" }, { status: 200 });
   }
+  await incrementApiKeyUsage(apiKey);
 
   let body;
   try {
