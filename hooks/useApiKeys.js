@@ -10,6 +10,7 @@ import { generateApiKey } from "@/lib/utils/apiKeyUtils";
  * @returns {object} apiKeys, loading, filteredKeys, searchTerm, setSearchTerm, fetchApiKeys, handleCreate, handleUpdate, handleDelete, getFormInitialState, openCreate, openEdit
  */
 export function useApiKeys(showToast) {
+  const FIXED_MONTHLY_LIMIT = "200";
   const [apiKeys, setApiKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,8 +72,8 @@ export function useApiKeys(showToast) {
         key: editingKey.key,
         description: editingKey.description || "",
         keyType: editingKey.type || "development",
-        limitMonthlyUsage: editingKey.limitMonthlyUsage || false,
-        monthlyUsageLimit: String(editingKey.monthlyUsageLimit || "1000"),
+        limitMonthlyUsage: true,
+        monthlyUsageLimit: FIXED_MONTHLY_LIMIT,
       };
     }
     return {
@@ -80,8 +81,8 @@ export function useApiKeys(showToast) {
       key: generateApiKey(),
       description: "",
       keyType: "development",
-      limitMonthlyUsage: false,
-      monthlyUsageLimit: "1000",
+      limitMonthlyUsage: true,
+      monthlyUsageLimit: FIXED_MONTHLY_LIMIT,
     };
   }, []);
 
