@@ -25,7 +25,9 @@ export default function ApiKeyModal({
           {isEditing ? "Edit API key" : "Create a new API key"}
         </h2>
         <p className="mb-6 text-sm text-gray-600">
-          {isEditing ? "Update the API key details." : "Enter a name and limit for the new API key."}
+          {isEditing
+            ? "Update the API key details."
+            : "Enter a name for the new API key."}
         </p>
         <form
           onSubmit={(e) => {
@@ -113,25 +115,27 @@ export default function ApiKeyModal({
               <input
                 type="checkbox"
                 id="limitMonthlyUsage"
-                checked={limitMonthlyUsage}
-                onChange={(e) => setLimitMonthlyUsage(e.target.checked)}
+                checked
+                disabled
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <label htmlFor="limitMonthlyUsage" className="text-sm font-medium text-gray-900">
                 Limit monthly usage<span className="text-red-500">*</span>
               </label>
             </div>
-            {limitMonthlyUsage && (
-              <input
-                type="number"
-                value={monthlyUsageLimit}
-                onChange={(e) => setMonthlyUsageLimit(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="1000"
-              />
-            )}
+            <input
+              type="number"
+              value="200"
+              readOnly
+              disabled
+              className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-gray-700"
+              aria-label="Monthly usage limit"
+            />
             <p className="mt-2 text-xs text-gray-500">
-              * If the combined usage of all your keys exceeds your account's allocated usage limit
+              * Monthly usage is fixed at 200 requests per key and cannot be changed.
+            </p>
+            <p className="mt-2 text-xs text-gray-500">
+              If the combined usage of all your keys exceeds your account's allocated usage limit
               (plan, add-ons, and any pay-as-you-go limit), all requests will be rejected.
             </p>
           </div>
