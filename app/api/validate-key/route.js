@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   validateApiKey,
   getApiKeyFromRequest,
-  incrementApiKeyUsage,
+  checkApiKeyRateLimit,
 } from "@/lib/server/validateApiKey";
 
 export async function POST(request) {
@@ -19,8 +19,22 @@ export async function POST(request) {
     const result = await validateApiKey(key);
 
     if (result.valid) {
-      await incrementApiKeyUsage(key);
-      return NextResponse.json({ valid: true });
+      const rateLimit = await checkApiKeyRateLimit(key);
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          {
+            valid: false,
+            error: rateLimit.error,
+            remaining: rateLimit.remaining,
+          },
+          { status: 429 }
+        );
+      }
+
+      return NextResponse.json({
+        valid: true,
+        ...(rateLimit.remaining !== null ? { remaining: rateLimit.remaining } : {}),
+      });
     }
 
     return NextResponse.json({
