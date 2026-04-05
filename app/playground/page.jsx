@@ -9,18 +9,39 @@ export default function PlaygroundPage() {
   const router = useRouter();
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const key = apiKey.trim();
     if (!key) return;
 
-    setLoading(true);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(API_KEY_STORAGE, key);
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch("/api/validate-key", {
+        method: "POST",
+        headers: {
+          "x-api-key": key,
+        },
+      });
+
+      const data = await res.json();
+      if (!data?.valid) {
+        setError(data?.error || "Invalid API key");
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem(API_KEY_STORAGE, key);
+      }
+      router.push("/protected");
+    } catch (err) {
+      setError(err?.message || "Could not validate API key");
+    } finally {
+      setLoading(false);
     }
-    router.push("/protected");
-    setLoading(false);
   };
 
   return (
@@ -47,6 +68,11 @@ export default function PlaygroundPage() {
               autoComplete="off"
             />
           </div>
+          {error ? (
+            <p className="text-sm text-red-600" role="alert">
+              {error}
+            </p>
+          ) : null}
           <button
             type="submit"
             disabled={loading || !apiKey.trim()}
