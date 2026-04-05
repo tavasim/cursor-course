@@ -1,6 +1,7 @@
 -- Create API Keys table
 CREATE TABLE IF NOT EXISTS api_keys (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID,
   name TEXT NOT NULL,
   key TEXT NOT NULL UNIQUE,
   description TEXT,
@@ -21,6 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_api_keys_type ON api_keys(type);
 
 -- Create index on created_at for sorting
 CREATE INDEX IF NOT EXISTS idx_api_keys_created_at ON api_keys(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user_id ON api_keys(user_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
@@ -47,6 +49,23 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- Backward-compatible migration for existing environments:
+ALTER TABLE api_keys
+  ADD COLUMN IF NOT EXISTS user_id UUID;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'api_keys_user_id_fkey'
+  ) THEN
+    ALTER TABLE api_keys
+      ADD CONSTRAINT api_keys_user_id_fkey
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
