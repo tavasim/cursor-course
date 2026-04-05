@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   validateApiKey,
   getApiKeyFromRequest,
+  incrementApiKeyUsage,
 } from "@/lib/server/validateApiKey";
 
 export async function POST(request) {
@@ -18,6 +19,7 @@ export async function POST(request) {
     const result = await validateApiKey(key);
 
     if (result.valid) {
+      await incrementApiKeyUsage(key);
       return NextResponse.json({ valid: true });
     }
 
