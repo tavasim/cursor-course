@@ -2,14 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/useToast";
+import Toast from "@/app/dashboards/components/Toast";
 
 const API_KEY_STORAGE = "api_key";
 
 export default function PlaygroundPage() {
   const router = useRouter();
+  const { toast, showToast } = useToast(4000);
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,7 +20,6 @@ export default function PlaygroundPage() {
 
     try {
       setLoading(true);
-      setError("");
 
       const res = await fetch("/api/validate-key", {
         method: "POST",
@@ -29,7 +30,7 @@ export default function PlaygroundPage() {
 
       const data = await res.json();
       if (!data?.valid) {
-        setError(data?.error || "Invalid API key");
+        showToast(data?.error || "Invalid API key", "error");
         return;
       }
 
@@ -38,7 +39,7 @@ export default function PlaygroundPage() {
       }
       router.push("/protected");
     } catch (err) {
-      setError(err?.message || "Could not validate API key");
+      showToast(err?.message || "Could not validate API key", "error");
     } finally {
       setLoading(false);
     }
@@ -68,11 +69,6 @@ export default function PlaygroundPage() {
               autoComplete="off"
             />
           </div>
-          {error ? (
-            <p className="text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          ) : null}
           <button
             type="submit"
             disabled={loading || !apiKey.trim()}
@@ -88,6 +84,8 @@ export default function PlaygroundPage() {
             )}
           </button>
         </form>
+
+        <Toast toast={toast} />
       </div>
     </div>
   );

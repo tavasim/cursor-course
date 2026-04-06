@@ -5,11 +5,11 @@ export default function Toast({ toast }) {
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 rounded-lg px-4 py-3 shadow-lg transition-all ${
+      className={`fixed left-1/2 top-4 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg px-4 py-3 shadow-lg transition-all sm:w-auto sm:max-w-none sm:px-5 ${
         isError ? "bg-red-500 text-white" : "bg-green-500 text-white"
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2">
         {isError ? (
           <svg
             xmlns="http://www.w3.org/2000/svg"
