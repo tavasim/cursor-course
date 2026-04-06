@@ -5,39 +5,14 @@ import {
   incrementApiKeyUsage,
   checkApiKeyRateLimit,
 } from "@/lib/server/validateApiKey";
-import {
-  parseGithubRepositoryUrl,
-  getReadmeMarkdownFromGithubUrl,
-  getLatestRepoVersion,
-} from "@/lib/server/githubGetInfo";
+import { parseGithubRepositoryUrl } from "@/lib/server/githubGetInfo";
+import { fetchGithubRepositoryData } from "@/lib/server/githubRepoAccess";
 import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
 import { getOpenAiApiKey } from "@/lib/server/openaiEnv";
 import { getLlmErrorMessageForClient } from "@/lib/server/llmError";
 
 /** Allow time for GitHub + OpenAI on Vercel (plan may still cap lower on Hobby). */
 export const maxDuration = 60;
-
-async function fetchRepoMeta(owner, repo, token) {
-  const headers = {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "cursor-course-github-summarizer",
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  const res = await fetch(
-    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
-    { headers, next: { revalidate: 0 } }
-  );
-  if (res.status === 404) {
-    return { error: "Repository not found", status: 404 };
-  }
-  if (!res.ok) {
-    return { error: `GitHub API error: ${res.status}`, status: res.status };
-  }
-  const data = await res.json();
-  return { data };
-}
 
 function readmeToExcerpt(content, maxChars = 1200) {
   if (!content) return "";
@@ -95,7 +70,9 @@ export async function POST(request) {
   const token = process.env.GITHUB_TOKEN?.trim() || "";
 
   try {
-    const meta = await fetchRepoMeta(owner, repo, token);
+    const { meta, readmeResult, latestRelease } =
+      await fetchGithubRepositoryData(owner, repo, repositoryUrl, token);
+
     if (meta.error) {
       return NextResponse.json(
         { error: meta.error },
@@ -105,11 +82,6 @@ export async function POST(request) {
 
     const { description, html_url, default_branch, stargazers_count, language } =
       meta.data;
-
-    const [readmeResult, latestRelease] = await Promise.all([
-      getReadmeMarkdownFromGithubUrl(repositoryUrl, { token }),
-      getLatestRepoVersion(owner, repo, { token }),
-    ]);
     const readmeContent =
       !readmeResult.error && readmeResult.content ? readmeResult.content : "";
     const readmeExcerpt = readmeToExcerpt(readmeContent);
