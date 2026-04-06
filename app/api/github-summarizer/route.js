@@ -9,7 +9,7 @@ import {
   parseGithubRepositoryUrl,
   getReadmeMarkdownFromGithubUrl,
   getLatestRepoVersion,
-} from "@/lib/server/githubReadme";
+} from "@/lib/server/githubGetInfo";
 import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
 import { getOpenAiApiKey } from "@/lib/server/openaiEnv";
 import { getLlmErrorMessageForClient } from "@/lib/server/llmError";
