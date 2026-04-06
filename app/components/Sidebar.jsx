@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 
 const navItems = [
   { href: "/dashboards", label: "Overview", icon: "home", external: false },
@@ -47,6 +50,96 @@ function ExternalIcon() {
   );
 }
 
+function userInitials(name, email) {
+  const fromName = typeof name === "string" ? name.trim() : "";
+  if (fromName) {
+    const parts = fromName.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return fromName.slice(0, 2).toUpperCase();
+  }
+  const e = typeof email === "string" ? email.trim() : "";
+  if (e) return e.slice(0, 2).toUpperCase();
+  return "?";
+}
+
+function SidebarUserSection() {
+  const { data: session, status } = useSession();
+  const [imageLoadError, setImageLoadError] = useState(false);
+
+  if (status === "loading") {
+    return (
+      <div className="shrink-0 border-t border-gray-200 px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 shrink-0 rounded-full bg-gray-200/80 animate-pulse" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3.5 w-24 rounded bg-gray-200/80 animate-pulse" />
+            <div className="h-3 w-full max-w-[180px] rounded bg-gray-200/80 animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session?.user) {
+    return null;
+  }
+
+  const { name, email, image } = session.user;
+  const displayName = name?.trim() || email?.split("@")[0] || "Signed in";
+  const initials = userInitials(name, email);
+  const photo =
+    typeof image === "string" && /^https?:\/\//i.test(image.trim())
+      ? image.trim()
+      : "";
+
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [photo]);
+
+  const avatarSrc = photo && !imageLoadError ? photo : undefined;
+
+  return (
+    <div className="shrink-0 border-t border-gray-200 bg-[#EEEEE9]/80 px-4 py-4">
+      <div className="flex items-start gap-3">
+        <Avatar
+          key={photo || "no-photo"}
+          className="relative z-20 h-11 w-11 shrink-0 border border-gray-200 bg-white"
+        >
+          <AvatarImage
+            src={avatarSrc}
+            alt=""
+            className="object-cover"
+            referrerPolicy="no-referrer"
+            onLoadingStatusChange={(status) => {
+              if (status === "error") setImageLoadError(true);
+            }}
+          />
+          <AvatarFallback className="rounded-full bg-gray-200 text-xs font-semibold text-gray-800">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
+          {email ? (
+            <p className="mt-0.5 truncate text-xs text-gray-600" title={email}>
+              {email}
+            </p>
+          ) : null}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => signOut({ callbackUrl: "/" })}
+        className="mt-3 w-full rounded-xl border border-[#c53030] bg-[#e53e3e] px-3 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-[#d63636] active:bg-[#c53030]"
+      >
+        Logout
+      </button>
+    </div>
+  );
+}
+
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
 
@@ -70,7 +163,7 @@ export default function Sidebar({ onClose }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 pb-6">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-2">
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (
@@ -103,6 +196,8 @@ export default function Sidebar({ onClose }) {
           </a>
         ))}
       </nav>
+
+      <SidebarUserSection />
     </aside>
   );
 }
