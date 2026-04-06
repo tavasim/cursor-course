@@ -8,6 +8,7 @@ import {
 import {
   parseGithubRepositoryUrl,
   getReadmeMarkdownFromGithubUrl,
+  getLatestRepoVersion,
 } from "@/lib/server/githubReadme";
 import { summarizeReadmeFromMarkdown } from "@/lib/server/chain";
 import { getOpenAiApiKey } from "@/lib/server/openaiEnv";
@@ -56,7 +57,12 @@ export async function POST(request) {
   const authResult = await validateApiKey(apiKey);
 
   if (!authResult.valid) {
-    return NextResponse.json({ error: "Invalid API key" }, { status: 200 });
+    return NextResponse.json(
+      {
+        error: authResult.error || "Invalid API key",
+      },
+      { status: 200 }
+    );
   }
   const rateLimit = await checkApiKeyRateLimit(apiKey);
   if (!rateLimit.allowed) {
@@ -100,9 +106,10 @@ export async function POST(request) {
     const { description, html_url, default_branch, stargazers_count, language } =
       meta.data;
 
-    const readmeResult = await getReadmeMarkdownFromGithubUrl(repositoryUrl, {
-      token,
-    });
+    const [readmeResult, latestRelease] = await Promise.all([
+      getReadmeMarkdownFromGithubUrl(repositoryUrl, { token }),
+      getLatestRepoVersion(owner, repo, { token }),
+    ]);
     const readmeContent =
       !readmeResult.error && readmeResult.content ? readmeResult.content : "";
     const readmeExcerpt = readmeToExcerpt(readmeContent);
@@ -116,6 +123,9 @@ export async function POST(request) {
     }
     if (typeof stargazers_count === "number") {
       parts.push(`Stars: ${stargazers_count}.`);
+    }
+    if (latestRelease.version) {
+      parts.push(`Latest release: ${latestRelease.version}.`);
     }
     if (readmeExcerpt) {
       parts.push(`README excerpt: ${readmeExcerpt}`);
@@ -159,6 +169,20 @@ export async function POST(request) {
       owner,
       repo,
       defaultBranch: default_branch ?? null,
+      stars: typeof stargazers_count === "number" ? stargazers_count : null,
+      latestVersion: latestRelease.version,
+      ...(latestRelease.releaseName || latestRelease.publishedAt
+        ? {
+            latestRelease: {
+              ...(latestRelease.releaseName
+                ? { name: latestRelease.releaseName }
+                : {}),
+              ...(latestRelease.publishedAt
+                ? { publishedAt: latestRelease.publishedAt }
+                : {}),
+            },
+          }
+        : {}),
       summary,
       cool_facts,
       summarySource,
