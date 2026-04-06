@@ -20,6 +20,27 @@ function readmeToExcerpt(content, maxChars = 1200) {
   return cleaned.length > maxChars ? `${cleaned.slice(0, maxChars)}…` : cleaned;
 }
 
+function normalizeRepoWebsiteUrl(homepage) {
+  const raw = typeof homepage === "string" ? homepage.trim() : "";
+  return raw || null;
+}
+
+function normalizeRepoLicense(license) {
+  if (!license || typeof license !== "object") {
+    return null;
+  }
+  const name = typeof license.name === "string" ? license.name.trim() : "";
+  const spdxId =
+    typeof license.spdx_id === "string" ? license.spdx_id.trim() : "";
+  if (!name && !spdxId) {
+    return null;
+  }
+  return {
+    ...(name ? { name } : {}),
+    ...(spdxId ? { spdxId } : {}),
+  };
+}
+
 export async function POST(request) {
   const apiKey = getApiKeyFromRequest(request);
   if (!apiKey) {
@@ -80,8 +101,18 @@ export async function POST(request) {
       );
     }
 
-    const { description, html_url, default_branch, stargazers_count, language } =
-      meta.data;
+    const {
+      description,
+      html_url,
+      default_branch,
+      stargazers_count,
+      language,
+      homepage,
+      license: licenseRaw,
+    } = meta.data;
+
+    const websiteUrl = normalizeRepoWebsiteUrl(homepage);
+    const license = normalizeRepoLicense(licenseRaw);
     const readmeContent =
       !readmeResult.error && readmeResult.content ? readmeResult.content : "";
     const readmeExcerpt = readmeToExcerpt(readmeContent);
@@ -98,6 +129,13 @@ export async function POST(request) {
     }
     if (latestRelease.version) {
       parts.push(`Latest release: ${latestRelease.version}.`);
+    }
+    if (websiteUrl) {
+      parts.push(`Website: ${websiteUrl}.`);
+    }
+    if (license) {
+      const label = license.name || license.spdxId;
+      parts.push(`License: ${label}.`);
     }
     if (readmeExcerpt) {
       parts.push(`README excerpt: ${readmeExcerpt}`);
@@ -143,6 +181,8 @@ export async function POST(request) {
       defaultBranch: default_branch ?? null,
       stars: typeof stargazers_count === "number" ? stargazers_count : null,
       latestVersion: latestRelease.version,
+      websiteUrl,
+      license,
       ...(latestRelease.releaseName || latestRelease.publishedAt
         ? {
             latestRelease: {
