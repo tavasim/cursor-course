@@ -14,6 +14,35 @@ const DEFAULT_PAYLOAD = `{
 
 const DOCS_HREF = "https://docs.example.com";
 
+/** Illustrative 200 response shape from `POST /api/github-summarizer` (values are representative). */
+const DEMO_RESPONSE_EXAMPLE = {
+  url: "https://github.com/assafelovic/gpt-researcher",
+  owner: "assafelovic",
+  repo: "gpt-researcher",
+  defaultBranch: "main",
+  stars: 26385,
+  license: {
+    key: "apache-2.0",
+    name: "Apache License 2.0",
+    spdxId: "Apache-2.0",
+  },
+  latestRelease: {
+    tag: "v3.4.3",
+    name: "v3.4.3",
+    publishedAt: "2026-03-13T14:06:38Z",
+  },
+  summary:
+    "GPT Researcher is an open deep research agent that facilitates web and local research, generating detailed, factual, and unbiased reports with citations. It offers customization options for creating domain-specific research agents and aims to provide accurate information through AI, addressing issues like misinformation and token limitations in existing LLMs.",
+  cool_facts: [
+    "GPT Researcher can generate reports exceeding 2,000 words and aggregate information from over 20 sources for objective conclusions.",
+    "It supports inline image generation using AI, automatically embedding relevant illustrations in research reports.",
+    "The tool includes a 'Deep Research' feature that allows for advanced recursive exploration of topics, enabling a tree-like research approach with configurable depth and breadth.",
+  ],
+  summarySource: "llm",
+  llm_status: "ok",
+  remaining: 181,
+};
+
 export function ApiRequestDemo() {
   const router = useRouter();
   const { status } = useSession();
@@ -41,7 +70,7 @@ export function ApiRequestDemo() {
       id="api-playground"
       className="border-t border-border bg-card/30 px-4 py-24 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -62,8 +91,8 @@ export function ApiRequestDemo() {
           </Button>
         </div>
 
-        <div className="mt-10 space-y-6 rounded-xl border border-border bg-background p-4 shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-center gap-2 font-mono text-sm">
+        <div className="mt-10 rounded-xl border border-border bg-background p-4 shadow-sm sm:p-6">
+          <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4 font-mono text-sm">
             <span className="rounded bg-accent/15 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-accent">
               POST
             </span>
@@ -72,33 +101,44 @@ export function ApiRequestDemo() {
             </span>
           </div>
 
-          <div>
-            <label htmlFor="demo-payload" className="mb-2 block text-sm font-medium text-foreground">
-              Request body (JSON)
-            </label>
-            <textarea
-              id="demo-payload"
-              value={payload}
-              onChange={(e) => setPayload(e.target.value)}
-              spellCheck={false}
-              rows={10}
-              className="w-full resize-y rounded-lg border border-input bg-card p-4 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
+          <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-10">
+            <div className="flex min-h-0 flex-col gap-4">
+              <h3 className="text-sm font-semibold text-foreground">Demo request</h3>
+              <div className="flex min-h-0 flex-1 flex-col">
+                <label htmlFor="demo-payload" className="mb-2 block text-sm font-medium text-foreground">
+                  Request body (JSON)
+                </label>
+                <textarea
+                  id="demo-payload"
+                  value={payload}
+                  onChange={(e) => setPayload(e.target.value)}
+                  spellCheck={false}
+                  rows={12}
+                  className="min-h-[min(40vh,18rem)] w-full flex-1 resize-y rounded-lg border border-input bg-card p-4 font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-[22rem]"
+                />
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  onClick={handleTryItOut}
+                  disabled={status === "loading"}
+                  className="gap-2"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Try it out
+                </Button>
+                <Button type="button" variant="secondary" onClick={() => setPayload(DEFAULT_PAYLOAD)}>
+                  Reset payload
+                </Button>
+              </div>
+            </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              type="button"
-              onClick={handleTryItOut}
-              disabled={status === "loading"}
-              className="gap-2"
-            >
-              <ArrowRight className="h-4 w-4" />
-              Try it out
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setPayload(DEFAULT_PAYLOAD)}>
-              Reset payload
-            </Button>
+            <div className="flex min-h-0 flex-col gap-3 border-t border-border pt-8 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-10">
+              <h3 className="text-sm font-semibold text-foreground">Example response</h3>
+              <pre className="min-h-[min(40vh,18rem)] flex-1 overflow-auto rounded-lg border border-border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground lg:min-h-[22rem]">
+                {JSON.stringify(DEMO_RESPONSE_EXAMPLE, null, 2)}
+              </pre>
+            </div>
           </div>
         </div>
       </div>

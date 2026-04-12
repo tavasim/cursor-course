@@ -32,10 +32,12 @@ function normalizeRepoLicense(license) {
   const name = typeof license.name === "string" ? license.name.trim() : "";
   const spdxId =
     typeof license.spdx_id === "string" ? license.spdx_id.trim() : "";
-  if (!name && !spdxId) {
+  const key = typeof license.key === "string" ? license.key.trim() : "";
+  if (!name && !spdxId && !key) {
     return null;
   }
   return {
+    ...(key ? { key } : {}),
     ...(name ? { name } : {}),
     ...(spdxId ? { spdxId } : {}),
   };
@@ -180,12 +182,13 @@ export async function POST(request) {
       repo,
       defaultBranch: default_branch ?? null,
       stars: typeof stargazers_count === "number" ? stargazers_count : null,
-      latestVersion: latestRelease.version,
-      websiteUrl,
       license,
-      ...(latestRelease.releaseName || latestRelease.publishedAt
+      ...(latestRelease.version ||
+        latestRelease.releaseName ||
+        latestRelease.publishedAt
         ? {
             latestRelease: {
+              ...(latestRelease.version ? { tag: latestRelease.version } : {}),
               ...(latestRelease.releaseName
                 ? { name: latestRelease.releaseName }
                 : {}),
