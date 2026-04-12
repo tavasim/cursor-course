@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import Toast from "@/app/dashboards/components/Toast";
-
-const API_KEY_STORAGE = "api_key";
 
 export default function PlaygroundPage() {
   const { toast, showToast } = useToast(4000);
@@ -12,12 +10,6 @@ export default function PlaygroundPage() {
   const [githubUrl, setGithubUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const stored = sessionStorage.getItem(API_KEY_STORAGE);
-    if (stored) setApiKey(stored);
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,10 +39,6 @@ export default function PlaygroundPage() {
       }
 
       setResult({ status: res.status, body: data });
-
-      if (typeof window !== "undefined") {
-        sessionStorage.setItem(API_KEY_STORAGE, key);
-      }
 
       if (res.status === 429) {
         showToast(data?.error || "Rate limit exceeded", "error");
