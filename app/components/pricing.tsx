@@ -17,7 +17,7 @@ const plans: {
     price: "$0",
     description: "Perfect for exploring open source projects",
     features: [
-      "5 repo analyses per month",
+      "Limited to 200 requests",
       "Basic repository summary",
       "Star count & history",
       "Latest 3 releases",
