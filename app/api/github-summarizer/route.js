@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import {
-  validateApiKey,
+  authorizeApiKeyForSummarizer,
   getApiKeyFromRequest,
-  incrementApiKeyUsage,
-  checkApiKeyRateLimit,
+  incrementApiKeyUsageWithRow,
 } from "@/lib/server/validateApiKey";
 import { parseGithubRepositoryUrl } from "@/lib/server/githubGetInfo";
 import { fetchGithubRepositoryData } from "@/lib/server/githubRepoAccess";
@@ -52,32 +51,20 @@ export async function POST(request) {
     );
   }
 
-  const authResult = await validateApiKey(apiKey);
+  const [authz, body] = await Promise.all([
+    authorizeApiKeyForSummarizer(apiKey),
+    request.json().catch(() => null),
+  ]);
 
-  if (!authResult.valid) {
-    return NextResponse.json(
-      {
-        error: authResult.error || "Invalid API key",
-      },
-      { status: 200 }
-    );
+  if (!authz.ok) {
+    const payload = { error: authz.error };
+    if (authz.httpStatus === 429) {
+      payload.remaining = authz.remaining;
+    }
+    return NextResponse.json(payload, { status: authz.httpStatus });
   }
-  const rateLimit = await checkApiKeyRateLimit(apiKey);
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      {
-        error: rateLimit.error,
-        remaining: rateLimit.remaining,
-      },
-      { status: 429 }
-    );
-  }
-  await incrementApiKeyUsage(apiKey);
 
-  let body;
-  try {
-    body = await request.json();
-  } catch {
+  if (body === null || typeof body !== "object") {
     return NextResponse.json(
       { error: "Invalid JSON body" },
       { status: 400 }
@@ -93,8 +80,10 @@ export async function POST(request) {
   const token = process.env.GITHUB_TOKEN?.trim() || "";
 
   try {
-    const { meta, readmeResult, latestRelease } =
-      await fetchGithubRepositoryData(owner, repo, repositoryUrl, token);
+    const [{ meta, readmeResult, latestRelease }] = await Promise.all([
+      fetchGithubRepositoryData(owner, repo, repositoryUrl, token),
+      incrementApiKeyUsageWithRow(apiKey, authz.row),
+    ]);
 
     if (meta.error) {
       return NextResponse.json(
@@ -202,8 +191,8 @@ export async function POST(request) {
       cool_facts,
       summarySource,
       llm_status,
-      ...(rateLimit.remaining !== null
-        ? { remaining: Math.max(rateLimit.remaining - 1, 0) }
+      ...(authz.remaining !== null
+        ? { remaining: Math.max(authz.remaining - 1, 0) }
         : {}),
       ...(llm_error ? { llm_error } : {}),
     });
