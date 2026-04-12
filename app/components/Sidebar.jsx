@@ -68,6 +68,16 @@ function SidebarUserSection() {
   const { data: session, status } = useSession();
   const [imageLoadError, setImageLoadError] = useState(false);
 
+  const rawImage = session?.user?.image;
+  const photo =
+    typeof rawImage === "string" && /^https?:\/\//i.test(rawImage.trim())
+      ? rawImage.trim()
+      : "";
+
+  useEffect(() => {
+    setImageLoadError(false);
+  }, [photo]);
+
   if (status === "loading") {
     return (
       <div className="shrink-0 border-t border-gray-200 px-4 py-4">
@@ -86,17 +96,9 @@ function SidebarUserSection() {
     return null;
   }
 
-  const { name, email, image } = session.user;
+  const { name, email } = session.user;
   const displayName = name?.trim() || email?.split("@")[0] || "Signed in";
   const initials = userInitials(name, email);
-  const photo =
-    typeof image === "string" && /^https?:\/\//i.test(image.trim())
-      ? image.trim()
-      : "";
-
-  useEffect(() => {
-    setImageLoadError(false);
-  }, [photo]);
 
   const avatarSrc = photo && !imageLoadError ? photo : undefined;
 
